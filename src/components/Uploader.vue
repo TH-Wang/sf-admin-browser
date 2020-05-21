@@ -31,7 +31,7 @@
           :style="'background-image: url(' + url + ')'"
         >
           <span v-show="maskShow" class="options-box">
-            <i class="el-icon-refresh-right"></i>
+            <i class="el-icon-refresh-right"></i><span>重新选择</span>
           </span>
         </div>
       </div>
@@ -73,8 +73,8 @@ export default {
   data() {
     return {
       url: null,
-      files: null,
       isSingle: false,
+      file: null,
       fileArray: [],
       maskShow: false,
       urlList: []
@@ -84,8 +84,8 @@ export default {
     handleFiles(e) {
       let files = e.target.files;
       if (this.mode == "single") {
-        this.fileArray == [files[0]];
-        this.$emit("change-file", this.fileArray);
+        this.file = files[0];
+        this.$emit("change-file", this.file);
         this.toSingleBase64(files[0]).then(baseUrl => {
           this.url = baseUrl;
           this.maskShow = true;
@@ -209,8 +209,9 @@ export default {
 .options-box {
   width: 100%;
   height: 100%;
-  font-size: 24px;
+  line-height: 20px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
@@ -220,6 +221,16 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
+}
+.options-box i {
+  font-size: 22px;
+}
+.options-box span {
+  font-size: 12px;
+  margin-top: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC,
+    Hiragino Sans GB, Microsoft YaHei, Helvetica Neue, Helvetica, Arial,
+    sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
 }
 .container:hover .options-box {
   opacity: 1;

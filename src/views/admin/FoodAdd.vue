@@ -10,11 +10,17 @@
   <!-- 6. 是否优惠 -->
   <!-- 7. 是否今日推送 -->
   <!-- 7. 是否新品推荐 -->
-  <el-form ref="form" label-width="80px" class="form-container">
+  <el-form
+    label-width="80px"
+    class="form-container"
+    :model="form"
+    :rules="formRules"
+    ref="form"
+  >
     <area-title icon="el-icon-success">必选项</area-title>
-    <el-form-item label="类别">
+    <el-form-item label="类别" prop="type">
       <el-select
-        v-model="form.foodtypeId"
+        v-model="form.type"
         placeholder="请选择菜品类别"
         class="short-item"
       >
@@ -26,7 +32,7 @@
         ></el-option>
       </el-select>
     </el-form-item>
-    <el-form-item label="图片">
+    <el-form-item label="图片" prop="files">
       <uploader
         :multiple="false"
         mode="single"
@@ -36,14 +42,14 @@
         <template v-slot:tip>选择一张比例为1:1的png/jpg图片</template>
       </uploader>
     </el-form-item>
-    <el-form-item label="名称">
+    <el-form-item label="名称" prop="name">
       <el-input
         v-model="form.name"
         class="regular-item"
         placeholder="请输入内容"
       ></el-input>
     </el-form-item>
-    <el-form-item label="价格">
+    <el-form-item label="价格" prop="price">
       <el-input v-model="form.price" class="short-item" placeholder="12">
         <template #prepend class="input-slot">￥</template>
         <template #append class="input-slot">元</template>
@@ -55,8 +61,21 @@
         v-model="form.options"
       ></option-menu>
     </el-form-item>
-    <el-button @click="handleGet">获取</el-button>
     <area-title icon="el-icon-info">可选项</area-title>
+    <el-button
+      type="primary"
+      icon="el-icon-check"
+      style="margin: 15px 0px 0px 20px"
+      @click="handleSubmit"
+      >确认添加</el-button
+    >
+    <el-button
+      type="danger"
+      icon="el-icon-refresh"
+      style="margin: 15px 0px 0px 20px"
+      @click="handleReset"
+      >重置</el-button
+    >
     <el-dialog :visible.sync="dialogVisible">
       <img width="100%" :src="dialogImageUrl" alt="" />
     </el-dialog>
@@ -75,13 +94,29 @@ export default {
     "option-menu": OptionMenu
   },
   data() {
+    var priceValid = function(rule, value, callback) {
+      let reg = /^\d+.?\d+$/;
+      if (!reg.test(value)) callback(new Error("价格只能是数字或小数"));
+      else callback();
+    };
     return {
       form: {
         name: "",
-        foodtypeId: "",
+        type: "",
         price: null,
         files: null,
         options: []
+      },
+      formRules: {
+        name: [{ required: true, message: "请输入名称", trigger: "blur" }],
+        type: [{ required: true, message: "请选择类别", trigger: "change" }],
+        price: [
+          { required: true, message: "请输入价格", trigger: "blur" },
+          { validator: priceValid, trigger: "blur" }
+        ],
+        files: [
+          { required: true, message: "请选择菜品图片", trigger: "change" }
+        ]
       },
       typeList: [],
       optionsList: [],
@@ -94,8 +129,15 @@ export default {
       this.dialogVisible = true;
       this.dialogImageUrl = baseUrl;
     },
-    handleGet() {
-      console.log(this.form);
+    async handleSubmit() {
+      try {
+        await this.$refs.form.validate();
+      } catch (error) {
+        return;
+      }
+    },
+    handleReset() {
+      this.$refs.form.resetFields();
     }
   },
   created() {
