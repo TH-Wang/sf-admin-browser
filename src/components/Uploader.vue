@@ -275,7 +275,10 @@ export default {
   background-color: rgba(0, 0, 0, 0.5);
 }
 .tip {
+  display: inline-block;
+  margin-left: 15px;
   font-size: 13px;
+  line-height: 24px;
   color: #999;
 }
 </style>

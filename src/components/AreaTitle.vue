@@ -20,7 +20,7 @@ export default {
 
 <style lang="scss" scoped>
 div {
-  margin: 0 0 15px 5px;
+  margin: 0 0 15px 10px;
   height: 50px;
   line-height: 50px;
   font-size: 18px;
