@@ -47,7 +47,7 @@
                   <el-menu-item index="4-3">类别管理</el-menu-item>
                 </router-link>
                 <router-link :to="baseUrl + '/foodoption'">
-                  <el-menu-item index="4-4">菜品选项</el-menu-item>
+                  <el-menu-item index="4-4">选项管理</el-menu-item>
                 </router-link>
               </el-menu-item-group>
             </el-submenu>
@@ -152,6 +152,9 @@ export default {
 </style>
 
 <style>
+.el-menu-item-group {
+  background-color: whitesmoke;
+}
 .el-menu-item i,
 .el-submenu i {
   color: #424476;
