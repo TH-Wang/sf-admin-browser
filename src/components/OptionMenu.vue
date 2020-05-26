@@ -1,27 +1,23 @@
 <template>
   <div>
-    <el-checkbox-group
-      v-for="item in optionsData"
-      :key="item.id"
-      class="check-box"
-      v-model="checkedList"
-      @change="handleModel"
-    >
-      <el-checkbox
-        class="check-title"
-        :label="item"
-        @change="checked => handleChange(checked, item)"
-      >
-        {{ item.title }}
-      </el-checkbox>
-      <el-checkbox-group
-        size="small"
-        v-model="item.check"
-        @change="checked => handleCheckBtnChange(checked, item)"
-      >
-        <el-checkbox-button v-for="el in item.opts" :key="el" :label="el">
-        </el-checkbox-button>
-      </el-checkbox-group>
+    <el-checkbox-group class="check-box" v-model="checkedList">
+      <div v-for="item in dataList" :key="item.id">
+        <el-checkbox
+          class="check-title"
+          :label="item"
+          @change="checked => handleChange(checked, item)"
+        >
+          {{ item.title }}
+        </el-checkbox>
+        <el-checkbox-group
+          size="small"
+          v-model="item.check"
+          @change="checked => handleCheckBtnChange(checked, item)"
+        >
+          <el-checkbox-button v-for="el in item.opts" :key="el" :label="el">
+          </el-checkbox-button>
+        </el-checkbox-group>
+      </div>
     </el-checkbox-group>
   </div>
 </template>
@@ -40,9 +36,7 @@ export default {
   },
   data: () => ({
     dataList: [],
-    checkedList: [],
-    list: ["微辣", "中辣"],
-    getter: []
+    checkedList: []
   }),
   methods: {
     handleChange(checked, data) {
@@ -55,22 +49,20 @@ export default {
             if (item.id == data.id) item.check = [];
             return item;
           }));
+      this.$emit("change", this.checkedList);
     },
     handleCheckBtnChange(value, data) {
-      if (value.length == 0)
-        this.checkedList = this.checkedList.filter(item => item.id != data.id);
-      else {
-        data.check = value;
+      if (!this.checkedList.some(item => item.id == data.id))
         this.checkedList.push(data);
-      }
-    },
-    handleModel(model) {
-      this.$emit("change", model);
+      this.$emit("change", this.checkedList);
     }
   },
   watch: {
     optionsData: function(newValue) {
-      this.dataList = newValue;
+      this.dataList = newValue.map(item => {
+        item.check = [];
+        return item;
+      });
     }
   }
 };
