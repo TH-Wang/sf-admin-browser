@@ -1,41 +1,23 @@
 <template>
   <!-- 必选项 -->
-  <!-- 1. 选择类别 -->
-  <!-- 2. 上传图片 -->
-  <!-- 3. 菜品名称 -->
-  <!-- 4. 菜品价格 -->
-  <!-- 5. 菜品选项 -->
-
+  <!-- 1. 菜品名称 -->
+  <!-- 2. 菜品价格 -->
+  <!-- 3. 上传图片 -->
+  <!-- 4. 描述 -->
+  <!-- 5. 选择类别 -->
+  <!-- 6. 菜品选项 -->
   <!-- 辅助选项 -->
   <!-- 6. 是否优惠 -->
   <!-- 7. 是否今日推送 -->
-  <!-- 7. 是否新品推荐 -->
+  <!-- 8. 是否新品推荐 -->
   <el-form
-    label-width="100px"
+    label-width="90px"
     class="form-container"
     :model="form"
     :rules="formRules"
     ref="form"
   >
     <area-title icon="el-icon-success">必选项</area-title>
-    <el-form-item label="类别" prop="type">
-      <el-select v-model="form.type" placeholder="请选择" class="short-item">
-        <el-option
-          v-for="item in typeList"
-          :key="item.id"
-          :label="item.typename"
-          :value="item.id"
-        ></el-option>
-      </el-select>
-    </el-form-item>
-    <el-form-item label="图片" prop="files">
-      <uploader :multiple="false" mode="single" v-model="form.files">
-        <template v-slot:tip
-          ><i class="el-icon-info uploader-icon"></i
-          >选择一张比例为1:1的png/jpg图片</template
-        >
-      </uploader>
-    </el-form-item>
     <el-form-item label="名称" prop="name">
       <el-input
         v-model="form.name"
@@ -48,6 +30,33 @@
         <template #prepend>￥</template>
         <template #append>元</template>
       </el-input>
+    </el-form-item>
+    <el-form-item label="图片" prop="files">
+      <uploader :multiple="false" mode="single" v-model="form.files">
+        <template v-slot:tip
+          ><i class="el-icon-info uploader-icon"></i
+          >选择一张比例为1:1的png/jpg图片</template
+        >
+      </uploader>
+    </el-form-item>
+    <el-form-item label="描述">
+      <el-input
+        type="textarea"
+        :row="2"
+        placeholder="请输入描述内容"
+        v-model="form.desc"
+        class="regular-item"
+      ></el-input>
+    </el-form-item>
+    <el-form-item label="类别" prop="type">
+      <el-select v-model="form.type" placeholder="请选择" class="short-item">
+        <el-option
+          v-for="item in typeList"
+          :key="item.id"
+          :label="item.typename"
+          :value="item.id"
+        ></el-option>
+      </el-select>
     </el-form-item>
     <el-form-item label="选项">
       <option-menu
@@ -151,16 +160,17 @@ export default {
       else callback();
     };
     var saleValid = function(rule, value, callback) {
-      value >= __this__.form.price
+      parseFloat(value) >= parseFloat(__this__.form.price)
         ? callback(new Error("不能大于等于原价"))
         : callback();
     };
     return {
       form: {
         name: "",
-        type: "",
         price: null,
         files: null,
+        desc: "",
+        type: "",
         options: [],
         isSale: false,
         saleType: 1,
@@ -227,8 +237,20 @@ export default {
         this.saleTip = false;
       }
     },
-    handleSaleChange() {
-      // this.showSale = checked;
+    reactSalePrice(val) {
+      switch (val) {
+        case 1:
+          this.form.salePrice =
+            (parseFloat(this.form.price) * parseFloat(this.form.saleNum)) / 10;
+          break;
+        case 2:
+          this.form.salePrice =
+            parseFloat(this.form.price) - parseFloat(this.form.saleNum);
+          break;
+        case 3:
+          this.form.salePrice = this.form.saleNum;
+          break;
+      }
     }
   },
   created() {
@@ -250,13 +272,21 @@ export default {
       .catch(err => {
         Promise.reject(err);
       });
+  },
+  watch: {
+    "form.saleType": function(val) {
+      this.reactSalePrice(val);
+    },
+    "form.saleNum": function() {
+      this.reactSalePrice(this.form.saleType);
+    }
   }
 };
 </script>
 
 <style lang="scss" scoped>
 .form-container {
-  width: 100%;
+  width: 650px;
 }
 .short-item {
   width: 200px;
