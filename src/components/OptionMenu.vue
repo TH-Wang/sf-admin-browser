@@ -57,6 +57,13 @@ export default {
       if (value.length == 0)
         this.checkedList = this.checkedList.filter(item => item.id != data.id);
       this.$emit("change", this.checkedList);
+    },
+    clearOptions() {
+      this.checkedList = [];
+      this.dataList = this.dataList.map(item => {
+        item.check = [];
+        return item;
+      });
     }
   },
   watch: {
