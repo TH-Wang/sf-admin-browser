@@ -18,9 +18,9 @@
     ref="form"
   >
     <area-title icon="el-icon-success">必选项</area-title>
-    <el-form-item label="名称" prop="name">
+    <el-form-item label="名称" prop="fname">
       <el-input
-        v-model="form.name"
+        v-model="form.fname"
         class="regular-item"
         placeholder="请输入内容"
       ></el-input>
@@ -31,25 +31,25 @@
         <template #append>元</template>
       </el-input>
     </el-form-item>
-    <el-form-item label="图片" prop="files">
-      <uploader :multiple="false" mode="single" v-model="form.files">
+    <el-form-item label="图片" prop="cover">
+      <uploader :multiple="false" mode="single" v-model="form.cover">
         <template v-slot:tip
           ><i class="el-icon-info uploader-icon"></i
           >选择一张比例为1:1的png/jpg图片</template
         >
       </uploader>
     </el-form-item>
-    <el-form-item label="描述">
+    <el-form-item label="描述" prop="descs">
       <el-input
         type="textarea"
         :row="2"
         placeholder="请输入描述内容"
-        v-model="form.desc"
+        v-model="form.descs"
         class="regular-item"
       ></el-input>
     </el-form-item>
-    <el-form-item label="类别" prop="type">
-      <el-select v-model="form.type" placeholder="请选择" class="short-item">
+    <el-form-item label="类别" prop="typeid">
+      <el-select v-model="form.typeid" placeholder="请选择" class="short-item">
         <el-option
           v-for="item in typeList"
           :key="item.id"
@@ -61,7 +61,8 @@
     <el-form-item label="选项">
       <option-menu
         :optionsData="optionsList"
-        v-model="form.options"
+        v-model="form.opts"
+        ref="opts"
       ></option-menu>
     </el-form-item>
     <area-title icon="el-icon-circle-plus">可选项</area-title>
@@ -166,29 +167,33 @@ export default {
     };
     return {
       form: {
-        name: "",
+        fname: "",
         price: null,
-        files: null,
-        desc: "",
-        type: "",
-        options: [],
+        cover: null,
+        descs: "",
+        typeid: "",
+        opts: [],
         isSale: false,
         saleType: 1,
-        saleNum: null,
+        saleNum: 0,
         salePrice: null,
         isNew: false,
         isHot: false
       },
       formRules: {
-        name: [{ required: true, message: "请输入名称", trigger: "blur" }],
-        type: [{ required: true, message: "请选择类别", trigger: "change" }],
+        fname: [{ required: true, message: "请输入名称", trigger: "blur" }],
+        typeid: [{ required: true, message: "请选择类别", trigger: "change" }],
         price: [
           { required: true, message: "请输入价格", trigger: "blur" },
           { validator: priceValid, trigger: "blur" }
         ],
-        files: [
+        cover: [
           { required: true, message: "请选择菜品图片", trigger: "change" }
         ],
+        descs: [
+          { required: true, message: "请输入菜品的描述内容", trigger: "blur" }
+        ],
+        opts: [{ required: false }],
         saleType: [
           { required: true, message: "请选择优惠方式", trigger: "change" }
         ],
@@ -218,8 +223,28 @@ export default {
     async handleSubmit() {
       try {
         await this.$refs.form.validate();
-        console.log(this.form);
+        let formData = this.createFormData();
+        let res = await this.axios({
+          url: "/admin/food/add",
+          method: "POST",
+          data: formData,
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        if (!res.data.err) {
+          this.$confirm("添加成功", "操作", {
+            confirmButtonText: "查看",
+            cancelButtonText: "继续添加",
+            type: "success"
+          })
+            .then(() => {
+              this.$router.push({ path: "/admin/foodmanage" });
+            })
+            .catch(() => {
+              this.resetForm();
+            });
+        }
       } catch (error) {
+        Promise.reject(error);
         return;
       }
     },
@@ -238,19 +263,55 @@ export default {
       }
     },
     reactSalePrice(val) {
+      let price = 0;
       switch (val) {
         case 1:
-          this.form.salePrice =
+          price =
             (parseFloat(this.form.price) * parseFloat(this.form.saleNum)) / 10;
           break;
         case 2:
-          this.form.salePrice =
-            parseFloat(this.form.price) - parseFloat(this.form.saleNum);
+          price = parseFloat(this.form.price) - parseFloat(this.form.saleNum);
           break;
         case 3:
-          this.form.salePrice = this.form.saleNum;
+          price = this.form.saleNum;
           break;
       }
+      this.form.salePrice = parseFloat(price.toFixed(2));
+    },
+    resetForm() {
+      this.$refs.form.resetFields();
+      this.$refs.opts.clearOptions();
+      this.form.isSale = false;
+      this.form.isNew = false;
+      this.form.isHot = false;
+    },
+    createFormData() {
+      let reqData = this.deepCopy(this.form);
+      reqData.cover = this.form.cover;
+      if (!reqData.isSale) reqData.salePrice = reqData.price;
+      reqData.opts = JSON.stringify(
+        reqData.opts.map(item => {
+          item.opts = item.check;
+          delete item.check;
+          return item;
+        })
+      );
+      let formData = new FormData();
+      for (const key in reqData) {
+        if (["isSale", "isNew", "isHot"].indexOf(key) != -1) {
+          reqData[key] = Number(reqData[key]);
+        }
+        formData.append(key, reqData[key]);
+      }
+      return formData;
+    },
+    deepCopy(obj) {
+      let copyObj = Array.isArray(obj) ? [] : {};
+      for (const key in obj) {
+        const el = obj[key];
+        copyObj[key] = typeof el == "object" ? this.deepCopy(el) : el;
+      }
+      return copyObj;
     }
   },
   created() {
