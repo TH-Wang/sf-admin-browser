@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-checkbox-group class="check-box" v-model="checkedList">
-      <div v-for="item in dataList" :key="item.id">
+    <el-checkbox-group v-model="checkedList">
+      <div v-for="item in dataList" :key="item.id" class="check-box">
         <el-checkbox
           class="check-title"
           :label="item"
@@ -54,6 +54,8 @@ export default {
     handleCheckBtnChange(value, data) {
       if (!this.checkedList.some(item => item.id == data.id))
         this.checkedList.push(data);
+      if (value.length == 0)
+        this.checkedList = this.checkedList.filter(item => item.id != data.id);
       this.$emit("change", this.checkedList);
     }
   },
