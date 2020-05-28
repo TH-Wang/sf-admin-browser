@@ -281,6 +281,7 @@ export default {
     resetForm() {
       this.$refs.form.resetFields();
       this.$refs.opts.clearOptions();
+      this.showSale = false;
       this.form.isSale = false;
       this.form.isNew = false;
       this.form.isHot = false;
@@ -288,6 +289,7 @@ export default {
     createFormData() {
       let reqData = this.deepCopy(this.form);
       reqData.cover = this.form.cover;
+      reqData.storeid = this.$store.state.info.id;
       if (!reqData.isSale) reqData.salePrice = reqData.price;
       reqData.opts = JSON.stringify(
         reqData.opts.map(item => {
