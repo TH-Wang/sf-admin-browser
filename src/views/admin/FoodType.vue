@@ -94,7 +94,7 @@ export default {
     showEditDialog(row) {
       this.isAdd = false;
       this.dialogForm.visible = true;
-      this.dialogForm = Object.assign(row, this.dialogForm);
+      this.dialogForm = Object.assign(this.dialogForm, row);
     },
     async showRemoveDialog(row) {
       let text =
