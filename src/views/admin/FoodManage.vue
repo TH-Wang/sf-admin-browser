@@ -1,6 +1,23 @@
 <template>
   <div>
-    <el-table :data="foodList">
+    <el-form>
+      <el-form-item label="排序方式">
+        <el-select
+          v-model="sortType"
+          placeholder="请选择"
+          size="small"
+          @change="handleSortChange"
+        >
+          <el-option
+            v-for="item in sortOpts"
+            :key="item.id"
+            :label="item.label"
+            :value="item.id"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <el-table :data="tableList" border>
       <el-table-column type="expand">
         <template v-slot="scope">
           <p class="expand-head">下单选项:</p>
@@ -35,12 +52,18 @@
           ></div>
         </template>
       </el-table-column>
-      <el-table-column label="名称" prop="fname" width="250"></el-table-column>
-      <el-table-column label="价格" prop="price" width="150"></el-table-column>
+      <el-table-column label="名称" prop="fname"></el-table-column>
+      <el-table-column
+        label="价格"
+        prop="price"
+        width="150"
+        align="center"
+      ></el-table-column>
       <el-table-column label="优惠" align="center" width="150">
         <template v-slot="scope">
           <div v-if="scope.row.isSale">
             <el-tag
+              v-if="scope.row.saleType != 3"
               :type="scope.row.saleType == 1 ? 'warning' : ''"
               size="medium"
               >{{ saleTag(scope.row) }}</el-tag
@@ -61,22 +84,65 @@
           <p v-if="!scope.row.isHot && !scope.row.isNew">无</p>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center">
+      <el-table-column label="操作" align="center" width="200">
         <template>
           <el-button size="mini">编辑</el-button>
           <el-button type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      class="pager"
+      background
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="foodList.length"
+      :page-sizes="[5, 10, 15, 20]"
+      :page-size="pageSize"
+      :current-page.sync="curPage"
+      @current-change="handlePagerChange"
+      @size-change="handleSizeChange"
+    >
+    </el-pagination>
   </div>
 </template>
 
 <script>
 export default {
   data: () => ({
-    foodList: []
+    tableList: [],
+    foodList: [],
+    sortType: null,
+    sortOpts: [
+      { id: 0, label: "按类别" },
+      { id: 1, label: "添加时间" },
+      { id: 2, label: "价格从小到大" },
+      { id: 3, label: "价格从大到小" }
+    ],
+    pageSize: 10,
+    curPage: 1
   }),
   methods: {
+    handleSortChange(value) {
+      switch (value) {
+        case 0:
+          this.foodList.sort((n1, n2) => n1.typeid - n2.typeid);
+          break;
+        case 1:
+          this.foodList.sort((n1, n2) => n2.id - n1.id);
+          break;
+        case 2:
+          this.foodList.sort(
+            (n1, n2) => parseInt(n1.price) - parseInt(n2.price)
+          );
+          break;
+        case 3:
+          this.foodList.sort(
+            (n1, n2) => parseInt(n2.price) - parseInt(n1.price)
+          );
+          break;
+      }
+      this.pagerTable(this.curPage, this.pageSize);
+    },
     saleTag(item) {
       let str = "";
       let price = parseFloat(item.price);
@@ -90,6 +156,18 @@ export default {
           break;
       }
       return str;
+    },
+    handlePagerChange(val) {
+      this.pagerTable(val, this.pageSize);
+    },
+    handleSizeChange(size) {
+      this.pageSize = size;
+      this.pagerTable(this.curPage, this.pageSize);
+    },
+    pagerTable(val, size) {
+      this.tableList = this.foodList.filter(
+        (item, index) => index >= (val - 1) * size && index < val * size
+      );
     }
   },
   created() {
@@ -99,11 +177,12 @@ export default {
       })
       .then(res => {
         if (!res.data.err) {
-          console.log(res.data.list.sort((n1, n2) => n2.price - n1.price));
           this.foodList = res.data.list.map(item => {
             item.price = `${item.price}元`;
             return item;
           });
+          let size = this.pageSize;
+          this.tableList = this.foodList.filter((item, index) => index < size);
         } else this.$message({ message: res.data.msg, type: "error" });
       })
       .catch(err => {
@@ -114,9 +193,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.el-select {
+  width: 150px;
+  line-height: 32px;
+}
 .cover-image {
   width: 100px;
   height: 100px;
+  margin: 0 auto;
   background-size: cover;
   background-position: center;
   border-radius: 5px;
@@ -138,5 +222,9 @@ export default {
 }
 .opts-tag + .opts-tag {
   margin-left: 8px;
+}
+.pager {
+  margin: 30px 0 30px 0;
+  text-align: center;
 }
 </style>
