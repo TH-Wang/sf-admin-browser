@@ -71,7 +71,7 @@ export default {
     },
     imgurl: {
       default: "",
-      type: String
+      type: null
     }
   },
   data() {
