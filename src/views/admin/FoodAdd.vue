@@ -17,6 +17,15 @@
     :rules="formRules"
     ref="form"
   >
+    <el-button
+      icon="el-icon-back"
+      v-if="isEdit"
+      type="primary"
+      size="medium"
+      plain
+      @click="handleBack"
+      >返回</el-button
+    >
     <area-title icon="el-icon-success">必选项</area-title>
     <el-form-item label="名称" prop="fname">
       <el-input
@@ -32,7 +41,12 @@
       </el-input>
     </el-form-item>
     <el-form-item label="图片" prop="cover">
-      <uploader :multiple="false" mode="single" v-model="form.cover">
+      <uploader
+        :multiple="false"
+        mode="single"
+        v-model="form.cover"
+        :imgurl="form.cover"
+      >
         <template v-slot:tip
           ><i class="el-icon-info uploader-icon"></i
           >选择一张比例为1:1的png/jpg图片</template
@@ -61,6 +75,7 @@
     <el-form-item label="选项">
       <option-menu
         :optionsData="optionsList"
+        :optionsCheck="form.opts"
         v-model="form.opts"
         ref="opts"
       ></option-menu>
@@ -108,7 +123,7 @@
         <el-input
           v-else-if="form.saleType == 2 || form.saleType == 3"
           v-model="form.saleNum"
-          style="width:150px;vertical-align:middle"
+          style="width:160px;vertical-align:middle"
           size="small"
         >
           <template #prepend>￥</template>
@@ -126,7 +141,7 @@
       icon="el-icon-check"
       style="margin: 15px 0px 0px 20px"
       @click="handleSubmit"
-      >确认添加</el-button
+      >{{ submitText }}</el-button
     >
     <el-button
       type="danger"
@@ -166,23 +181,24 @@ export default {
         : callback();
     };
     return {
-      form: {
+      initial: {
         fname: "",
-        price: null,
-        cover: null,
+        price: "",
+        cover: "",
         descs: "",
         typeid: "",
         opts: [],
         isSale: false,
         saleType: 1,
-        saleNum: 0,
-        salePrice: null,
+        saleNum: 1,
+        salePrice: 0,
         isNew: false,
         isHot: false
       },
+      form: {},
       formRules: {
         fname: [{ required: true, message: "请输入名称", trigger: "blur" }],
-        typeid: [{ required: true, message: "请选择类别", trigger: "change" }],
+        typeid: [{ required: true, message: "请选择类别", trigger: "blur" }],
         price: [
           { required: true, message: "请输入价格", trigger: "blur" },
           { validator: priceValid, trigger: "blur" }
@@ -202,12 +218,15 @@ export default {
           { validator: saleValid, trigger: "change" }
         ]
       },
+      isEdit: false,
       typeList: [],
       optionsList: [],
       showSale: false,
       saleTip: false,
       dialogImageUrl: "",
-      dialogVisible: false
+      dialogVisible: false,
+      submitText: "确认添加",
+      addSuccessful: false
     };
   },
   computed: {
@@ -216,33 +235,47 @@ export default {
         ? "折扣"
         : this.form.saleType == 2
         ? "立减金额"
-        : "直接优惠价";
+        : "优惠价";
     }
   },
   methods: {
+    handleBack() {
+      this.$router.go(-1);
+    },
     async handleSubmit() {
       try {
         await this.$refs.form.validate();
+        // 创建formdata数据，提交
         let formData = this.createFormData();
+        // 判断请求类型
+        let reqType = this.$route.params.data ? "edit" : "add";
         let res = await this.axios({
-          url: "/admin/food/add",
+          url: `/admin/food/${reqType}`,
           method: "POST",
           data: formData,
           headers: { "Content-Type": "multipart/form-data" }
         });
         if (!res.data.err) {
-          this.$confirm("添加成功", "操作", {
-            confirmButtonText: "查看",
-            cancelButtonText: "继续添加",
+          this.addSuccessful = true;
+          // 响应操作成功，则做出相应提示
+          let title = this.$route.params.data
+            ? "修改成功，可返回列表查看"
+            : "添加成功";
+          let text = this.$route.params.data
+            ? ["立即查看", "确认"]
+            : ["查看", "继续添加"];
+          this.$confirm(title, "操作", {
+            confirmButtonText: text[0],
+            cancelButtonText: text[1],
             type: "success"
           })
             .then(() => {
               this.$router.push({ path: "/admin/foodmanage" });
             })
             .catch(() => {
-              this.resetForm();
+              this.$route.params.data ? void 0 : this.resetForm();
             });
-        }
+        } else this.$alert(res.data.msg, "错误", { type: "error" });
       } catch (error) {
         Promise.reject(error);
         return;
@@ -266,17 +299,23 @@ export default {
       let price = 0;
       switch (val) {
         case 1:
-          price =
-            (parseFloat(this.form.price) * parseFloat(this.form.saleNum)) / 10;
+          if (!this.form.price == "") {
+            price = (
+              (parseFloat(this.form.price) * parseFloat(this.form.saleNum)) /
+              10
+            ).toFixed(2);
+          }
           break;
         case 2:
-          price = parseFloat(this.form.price) - parseFloat(this.form.saleNum);
+          price = (
+            parseFloat(this.form.price) - parseFloat(this.form.saleNum)
+          ).toFixed(2);
           break;
         case 3:
           price = this.form.saleNum;
           break;
       }
-      this.form.salePrice = parseFloat(price.toFixed(2));
+      this.form.salePrice = parseFloat(price);
     },
     resetForm() {
       this.$refs.form.resetFields();
@@ -314,9 +353,62 @@ export default {
         copyObj[key] = typeof el == "object" ? this.deepCopy(el) : el;
       }
       return copyObj;
+    },
+    getForm() {
+      console.log(this.form.opts);
+    },
+    init() {
+      // 如果是修改，则把传入的菜品数据传入到form中
+      if (this.$route.params.data) {
+        let data = this.$route.params.data;
+        data.opts = JSON.parse(data.opts).map(item => {
+          item.check = item.opts;
+          return item;
+        });
+        // 将数字转换为布尔值
+        for (const key in data) {
+          if (["isSale", "isNew", "isHot"].indexOf(key) != -1)
+            data[key] = Boolean(data[key]);
+        }
+        // 如果有优惠，则显示优惠组件，并计算saleNum
+        if (data.isSale) {
+          this.showSale = true;
+          switch (data.saleType) {
+            case 1:
+              data.saleNum = parseFloat(
+                ((data.salePrice / data.price) * 10).toFixed(2)
+              );
+              break;
+            case 2:
+              data.saleNum = parseFloat(
+                (data.price - data.salePrice).toFixed(2)
+              );
+              break;
+            case 3:
+              data.saleNum = data.salePrice;
+              break;
+          }
+        }
+        this.form = this.deepCopy(data);
+      } else {
+        this.form = this.deepCopy(this.initial);
+      }
+    }
+  },
+  watch: {
+    "form.saleType": function(val) {
+      this.reactSalePrice(val);
+    },
+    "form.saleNum": function() {
+      this.reactSalePrice(this.form.saleType);
     }
   },
   created() {
+    if (this.$route.params.data) {
+      this.isEdit = true;
+      this.submitText = "确认修改";
+    }
+    this.init();
     this.axios
       .get("/admin/food/config", {
         params: { storeid: this.$store.state.info.id }
@@ -336,13 +428,34 @@ export default {
         Promise.reject(err);
       });
   },
-  watch: {
-    "form.saleType": function(val) {
-      this.reactSalePrice(val);
-    },
-    "form.saleNum": function() {
-      this.reactSalePrice(this.form.saleType);
-    }
+  beforeRouteLeave(to, from, next) {
+    if (!from.params.data && !this.addSuccessful) {
+      // 如果是添加页面，判断是否填入了内容
+      let formArr = Object.values(this.form).filter(
+        item => typeof item != "object"
+      );
+      let initialArr = Object.values(this.initial).filter(
+        item => typeof item != "object"
+      );
+      let result = formArr.every((item, index) => {
+        return item == initialArr[index];
+      });
+      result
+        ? next()
+        : // 如果填入则提示
+          this.$confirm(
+            "如果现在离开，则当前内容会丢失，是否确认离开？",
+            "未完成",
+            {
+              distinguishCancelAndClose: true,
+              confirmButtonText: "继续填写",
+              cancelButtonText: "离开",
+              type: "warning"
+            }
+          )
+            .then(() => void 0)
+            .catch(action => (action == "cancel" ? next() : void 0));
+    } else next();
   }
 };
 </script>

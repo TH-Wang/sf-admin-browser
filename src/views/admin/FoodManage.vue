@@ -20,8 +20,10 @@
     <el-table :data="tableList" border>
       <el-table-column type="expand">
         <template v-slot="scope">
-          <p class="expand-head">下单选项:</p>
           <el-form>
+            <p class="expand-head">介绍:</p>
+            <span>{{ scope.row.descs }}</span>
+            <p class="expand-head" style="margin-top:40px;">下单选项:</p>
             <el-form-item
               v-for="item in JSON.parse(scope.row.opts)"
               :key="item.id"
@@ -53,12 +55,9 @@
         </template>
       </el-table-column>
       <el-table-column label="名称" prop="fname"></el-table-column>
-      <el-table-column
-        label="价格"
-        prop="price"
-        width="150"
-        align="center"
-      ></el-table-column>
+      <el-table-column label="价格" width="150" align="center">
+        <template v-slot="scope">{{ scope.row.price }}元</template>
+      </el-table-column>
       <el-table-column label="优惠" align="center" width="150">
         <template v-slot="scope">
           <div v-if="scope.row.isSale">
@@ -85,9 +84,14 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="200">
-        <template>
-          <el-button size="mini">编辑</el-button>
-          <el-button type="danger" size="mini">删除</el-button>
+        <template v-slot="scope">
+          <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button
+            type="danger"
+            size="mini"
+            @click="handleRomove(scope.row.id)"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -152,7 +156,7 @@ export default {
           str = `${parseFloat(((salePrice / price) * 10).toFixed(1))}折`;
           break;
         case 2:
-          str = `立减${price - salePrice}元`;
+          str = `立减${parseFloat((price - salePrice).toFixed(2))}元`;
           break;
       }
       return str;
@@ -168,6 +172,26 @@ export default {
       this.tableList = this.foodList.filter(
         (item, index) => index >= (val - 1) * size && index < val * size
       );
+    },
+    handleEdit(data) {
+      this.$router.push({ name: "FoodAdd", params: { data } });
+    },
+    async handleRomove(id) {
+      try {
+        await this.$confirm("是否删除该菜品？", "删除", {
+          confirmButtonText: "确认",
+          cancelButtonText: "取消",
+          type: "error"
+        });
+        let res = await this.axios.post("/admin/food/remove", { id });
+        if (!res.data.err) {
+          this.foodList = this.foodList.filter(item => item.id != id);
+          this.pagerTable(this.curPage, this.pageSize);
+          this.$message({ message: res.data.msg, type: "success" });
+        } else this.$alert(res.data.msg, "错误", { type: "error" });
+      } catch (error) {
+        Promise.reject(error);
+      }
     }
   },
   created() {
@@ -177,10 +201,7 @@ export default {
       })
       .then(res => {
         if (!res.data.err) {
-          this.foodList = res.data.list.map(item => {
-            item.price = `${item.price}元`;
-            return item;
-          });
+          this.foodList = res.data.list;
           let size = this.pageSize;
           this.tableList = this.foodList.filter((item, index) => index < size);
         } else this.$message({ message: res.data.msg, type: "error" });
