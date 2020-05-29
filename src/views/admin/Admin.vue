@@ -4,7 +4,7 @@
       <el-header>ElementUI</el-header>
       <el-container id="main">
         <el-aside width="200px">
-          <el-menu default-active="1" unique-opened @select="getSelectMenu">
+          <el-menu default-active="1" unique-opened>
             <router-link :to="baseUrl + '/cash'">
               <el-menu-item index="1">
                 <i class="el-icon-s-order"></i>
@@ -82,9 +82,9 @@
           </el-menu>
         </el-aside>
         <el-main>
-          <keep-alive>
-            <router-view :include="['storeadd']"></router-view>
-          </keep-alive>
+          <!-- <keep-alive> -->
+          <router-view></router-view>
+          <!-- </keep-alive> -->
         </el-main>
       </el-container>
     </el-container>
@@ -97,11 +97,6 @@ export default {
     return {
       baseUrl: "/admin"
     };
-  },
-  methods: {
-    getSelectMenu(index, path) {
-      console.log(index, path);
-    }
   }
 };
 </script>

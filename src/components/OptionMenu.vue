@@ -71,18 +71,15 @@ export default {
       });
     },
     confirmChecked(data) {
-      return this.checkedList.some(item => item.id == data.id);
+      return this.optionsCheck.some(item => item.id == data.id);
     }
-  },
-  created() {
-    this.checkedList = this.optionsCheck;
   },
   watch: {
     optionsData: function(val) {
       var __this__ = this;
       this.dataList = val.map(item => {
-        let checkItem = __this__.checkedList.find(el => el.id == item.id);
-        item.check = checkItem ? checkItem.check : [];
+        let checkItem = __this__.optionsCheck.find(el => el.id == item.id);
+        item.check = checkItem ? checkItem.opts : [];
         return item;
       });
     }
