@@ -75,7 +75,6 @@
     <el-form-item label="选项">
       <option-menu
         :optionsData="optionsList"
-        :optionsCheck="form.opts"
         v-model="form.opts"
         ref="opts"
       ></option-menu>
@@ -245,7 +244,7 @@ export default {
     async handleSubmit() {
       try {
         await this.$refs.form.validate();
-        // 创建formdata数据，提交
+        // // 创建formdata数据，提交
         let formData = this.createFormData();
         // 判断请求类型
         let reqType = this.$route.params.data ? "edit" : "add";
@@ -354,17 +353,11 @@ export default {
       }
       return copyObj;
     },
-    getForm() {
-      console.log(this.form.opts);
-    },
     init() {
       // 如果是修改，则把传入的菜品数据传入到form中
       if (this.$route.params.data) {
         let data = this.$route.params.data;
-        data.opts = JSON.parse(data.opts).map(item => {
-          item.check = item.opts;
-          return item;
-        });
+        data.opts = JSON.parse(data.opts);
         // 将数字转换为布尔值
         for (const key in data) {
           if (["isSale", "isNew", "isHot"].indexOf(key) != -1)
