@@ -5,6 +5,7 @@
         <el-checkbox
           class="check-title"
           :label="item"
+          :checked="confirmChecked(item)"
           @change="checked => handleChange(checked, item)"
         >
           {{ item.title }}
@@ -25,11 +26,15 @@
 <script>
 export default {
   model: {
-    prop: "checkedList",
+    prop: "optionsCheck",
     event: "change"
   },
   props: {
     optionsData: {
+      type: Array,
+      default: () => []
+    },
+    optionsCheck: {
       type: Array,
       default: () => []
     }
@@ -64,12 +69,20 @@ export default {
         item.check = [];
         return item;
       });
+    },
+    confirmChecked(data) {
+      return this.checkedList.some(item => item.id == data.id);
     }
   },
+  created() {
+    this.checkedList = this.optionsCheck;
+  },
   watch: {
-    optionsData: function(newValue) {
-      this.dataList = newValue.map(item => {
-        item.check = [];
+    optionsData: function(val) {
+      var __this__ = this;
+      this.dataList = val.map(item => {
+        let checkItem = __this__.checkedList.find(el => el.id == item.id);
+        item.check = checkItem ? checkItem.check : [];
         return item;
       });
     }

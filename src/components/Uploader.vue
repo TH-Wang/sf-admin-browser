@@ -68,6 +68,10 @@ export default {
     multiple: {
       default: true,
       type: Boolean
+    },
+    imgurl: {
+      default: "",
+      type: String
     }
   },
   data() {
@@ -149,6 +153,10 @@ export default {
   },
   created() {
     this.isSingle = this.mode == "single";
+    if (this.imgurl != "") {
+      this.url = this.imgurl;
+      this.maskShow = true;
+    }
   }
 };
 </script>
