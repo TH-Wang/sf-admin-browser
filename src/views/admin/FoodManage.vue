@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-form>
+    <el-form inline>
       <el-form-item label="排序方式">
         <el-select
           v-model="sortType"
@@ -15,6 +15,16 @@
             :value="item.id"
           ></el-option>
         </el-select>
+      </el-form-item>
+      <el-form-item label="搜索" style="margin-left: 50px">
+        <el-input
+          placeholder="关键字搜索"
+          prefix-icon="el-icon-search"
+          size="small"
+          v-model="searchVal"
+          @input="handleSearchInput"
+        >
+        </el-input>
       </el-form-item>
     </el-form>
     <el-table :data="tableList" border>
@@ -99,7 +109,7 @@
       class="pager"
       background
       layout="total, sizes, prev, pager, next, jumper"
-      :total="foodList.length"
+      :total="foodTotal"
       :page-sizes="[5, 10, 15, 20]"
       :page-size="pageSize"
       :current-page.sync="curPage"
@@ -111,8 +121,11 @@
 </template>
 
 <script>
+import debounce from "@/utils/debounce.js";
+
 export default {
   data: () => ({
+    searchVal: "",
     tableList: [],
     foodList: [],
     sortType: null,
@@ -123,7 +136,8 @@ export default {
       { id: 3, label: "价格从大到小" }
     ],
     pageSize: 10,
-    curPage: 1
+    curPage: 1,
+    foodTotal: 0
   }),
   methods: {
     handleSortChange(value) {
@@ -145,7 +159,7 @@ export default {
           );
           break;
       }
-      this.pagerTable(this.curPage, this.pageSize);
+      this.reactiveTable(this.curPage, this.pageSize);
     },
     saleTag(item) {
       let str = "";
@@ -162,16 +176,27 @@ export default {
       return str;
     },
     handlePagerChange(val) {
-      this.pagerTable(val, this.pageSize);
+      this.reactiveTable(val, this.pageSize);
     },
     handleSizeChange(size) {
       this.pageSize = size;
-      this.pagerTable(this.curPage, this.pageSize);
+      this.reactiveTable(this.curPage, this.pageSize);
     },
-    pagerTable(val, size) {
-      this.tableList = this.foodList.filter(
-        (item, index) => index >= (val - 1) * size && index < val * size
+    reactiveTable(cur, size) {
+      let key = this.searchVal;
+      var reactList = null;
+      if (key == "") {
+        reactList = this.foodList;
+      } else {
+        reactList = this.foodList.filter(
+          item =>
+            item.fname.indexOf(key) != -1 || item.typename.indexOf(key) != -1
+        );
+      }
+      this.tableList = reactList.filter(
+        (item, index) => index >= (cur - 1) * size && index < cur * size
       );
+      this.foodTotal = reactList.length;
     },
     handleEdit(data) {
       this.$router.push({ name: "FoodAdd", params: { data } });
@@ -186,13 +211,16 @@ export default {
         let res = await this.axios.post("/admin/food/remove", { id });
         if (!res.data.err) {
           this.foodList = this.foodList.filter(item => item.id != id);
-          this.pagerTable(this.curPage, this.pageSize);
+          this.reactiveTable(this.curPage, this.pageSize);
           this.$message({ message: res.data.msg, type: "success" });
         } else this.$alert(res.data.msg, "错误", { type: "error" });
       } catch (error) {
         Promise.reject(error);
       }
-    }
+    },
+    handleSearchInput: debounce(function() {
+      this.reactiveTable(this.curPage, this.pageSize);
+    })
   },
   created() {
     this.axios
@@ -203,6 +231,7 @@ export default {
         if (!res.data.err) {
           this.foodList = res.data.list;
           let size = this.pageSize;
+          this.foodTotal = this.foodList.length;
           this.tableList = this.foodList.filter((item, index) => index < size);
         } else this.$message({ message: res.data.msg, type: "error" });
       })
