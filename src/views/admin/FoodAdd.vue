@@ -175,9 +175,19 @@ export default {
       else callback();
     };
     var saleValid = function(rule, value, callback) {
-      parseFloat(value) >= parseFloat(__this__.form.price)
-        ? callback(new Error("不能大于等于原价"))
-        : callback();
+      if (!/^(\d+|\d+.\d+)$/.test(value)) {
+        callback(new Error("请输入数字"));
+        return;
+      }
+      if (__this__.form.saleType == 1) {
+        parseFloat(value) >= 9.9
+          ? callback(new Error("折扣不能超过9.9"))
+          : callback();
+      } else {
+        parseFloat(value) >= parseFloat(__this__.form.price)
+          ? callback(new Error("不能大于等于原价"))
+          : callback();
+      }
     };
     return {
       initial: {
@@ -214,7 +224,7 @@ export default {
         ],
         saleNum: [
           { required: true, message: "请输入", trigger: "change" },
-          { validator: saleValid, trigger: "change" }
+          { validator: saleValid, trigger: "blur" }
         ]
       },
       isEdit: false,
@@ -244,7 +254,7 @@ export default {
     async handleSubmit() {
       try {
         await this.$refs.form.validate();
-        // // 创建formdata数据，提交
+        // 创建formdata数据，提交
         let formData = this.createFormData();
         // 判断请求类型
         let reqType = this.$route.params.data ? "edit" : "add";
@@ -326,16 +336,20 @@ export default {
     },
     createFormData() {
       let reqData = this.deepCopy(this.form);
+      console.log(this.form);
       reqData.cover = this.form.cover;
       reqData.storeid = this.$store.state.info.id;
       if (!reqData.isSale) reqData.salePrice = reqData.price;
       reqData.opts = JSON.stringify(
         reqData.opts.map(item => {
-          item.opts = item.check;
-          delete item.check;
+          if (item.check) {
+            item.opts = item.check;
+            delete item.check;
+          }
           return item;
         })
       );
+      console.log(reqData);
       let formData = new FormData();
       for (const key in reqData) {
         if (["isSale", "isNew", "isHot"].indexOf(key) != -1) {
