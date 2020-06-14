@@ -27,7 +27,7 @@
         </el-input>
       </el-form-item>
     </el-form>
-    <el-table :data="tableList" border>
+    <el-table :data="tableList" border stripe>
       <el-table-column type="expand">
         <template v-slot="scope">
           <el-form>
