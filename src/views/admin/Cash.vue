@@ -19,7 +19,7 @@
       <card-panel
         class="card-panel"
         title="正在点餐顾客"
-        :number="6"
+        :number="customerCount"
         numberColor="#487eb0"
       >
         <template #suffix>
@@ -34,7 +34,7 @@
         </div>
         <transition-group name="list">
           <order-item
-            v-for="item in list"
+            v-for="item in orderList"
             :key="item.orderNumber"
             :info="item"
             mode="pending"
@@ -55,7 +55,7 @@
         </transition-group>
       </div>
     </div>
-    <el-button @click="sendSocketInfo">发送</el-button>
+    <!-- <el-button @click="sendSocketInfo">发送</el-button> -->
   </div>
 </template>
 
@@ -101,25 +101,45 @@ export default {
         detail: [{ name: "酸菜肉丝盖饭", count: 1 }],
         ctime: "今天13:45"
       }
-    ]
+    ],
+    customerCount: 0
   }),
   methods: {
-    sendSocketInfo() {
-      this.$socket.emit("test", { msg: "cash发送了一段信息" });
+    // sendSocketInfo() {
+    //   this.$socket.emit("order", "cash", 10, "下订单");
+    // }
+  },
+  computed: {
+    orderList() {
+      return this.$store.state.orderList;
     }
   },
-  // sockets: {
-  //   connect: function() {
-  //     console.log("socket connected");
-  //   },
-  //   response: function(data) {
-  //     console.log(data);
-  //   }
-  // },
   mounted() {
-    this.sockets.listener.subscribe("response", () => {
-      // console.log(data);
-    });
+    // var __this__ = this;
+    // var ws = new WebSocket("ws://localhost:5000");
+    // ws.sendData = function(data) {
+    //   ws.send(JSON.stringify(data));
+    // };
+    // ws.onopen = function() {
+    //   console.log("connect socket server");
+    //   ws.sendData({
+    //     event: "storeAuthorize",
+    //     data: {
+    //       storeid: __this__.$store.state.info.id
+    //     }
+    //   });
+    // };
+    // ws.onmessage = function(msg) {
+    //   console.log(msg);
+    // };
+    // ws.onclose = function(e) {
+    //   console.log(e);
+    // };
+  },
+  watch: {
+    "$store.state.customers": function(val) {
+      this.customerCount = val.length;
+    }
   }
 };
 </script>

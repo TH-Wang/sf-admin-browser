@@ -11,20 +11,8 @@ export default new Vuex.Store({
     info: JSON.parse(localStorage.getItem("store-info"))
       ? JSON.parse(localStorage.getItem("store-info"))
       : {},
-    formRules: {
-      tel: [
-        { required: true, msg: "请输入手机号码" },
-        { reg: /^1[34578]\d{9}$/, msg: "请输入格式正确是手机号码" }
-      ],
-      pass: [
-        { required: true, msg: "请输入密码" },
-        { reg: /^[\s\S]{8,20}$/, msg: "密码为8-12位" }
-      ],
-      code: [
-        { required: true, msg: "请输入验证码" },
-        { reg: /^\d{6}$/, msg: "验证码格式不正确" }
-      ]
-    }
+    customers: [],
+    orderList: []
   },
   getters: {},
   mutations: {
@@ -35,6 +23,12 @@ export default new Vuex.Store({
     setInfo(state, payload) {
       localStorage.setItem("store-info", JSON.stringify(payload));
       state.info = payload;
+    },
+    pushCustomers(state, customer) {
+      state.customers.push(customer);
+    },
+    pushOrder(state, order) {
+      state.orderList.push(order);
     }
   },
   actions: {},
