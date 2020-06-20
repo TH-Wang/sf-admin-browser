@@ -11,6 +11,7 @@ import FoodAdd from "@/views/admin/FoodAdd";
 import FoodManage from "@/views/admin/FoodManage";
 import FoodType from "@/views/admin/FoodType";
 import FoodOption from "@/views/admin/FoodOption";
+import OrderList from "@/views/admin/OrderList";
 import StoreAdd from "@/views/admin/StoreAdd";
 import StoreList from "@/views/admin/StoreList";
 import Setting from "@/views/admin/Setting";
@@ -43,6 +44,11 @@ const childRoutes = [
     path: "foodoption",
     name: "FoodOption",
     component: FoodOption
+  },
+  {
+    path: "orderlist",
+    name: "OrderList",
+    component: OrderList
   },
   {
     path: "storeadd",

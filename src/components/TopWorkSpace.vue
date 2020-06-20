@@ -1,5 +1,7 @@
 <template>
   <div :class="`container ${isFull ? 'full-container' : ''}`">
+    <!-- 店铺名称 -->
+    <span class="store-name">{{ storeInfo.sname }}</span>
     <!-- 头像 -->
     <el-dropdown>
       <div class="avatar-box"></div>
@@ -47,6 +49,11 @@ export default {
       console.log(true);
       this.$emit("open-drawer");
     }
+  },
+  computed: {
+    storeInfo() {
+      return this.$store.state.info;
+    }
   }
 };
 </script>
@@ -69,6 +76,11 @@ export default {
 }
 .full-container {
   width: calc(100% - 64px);
+}
+.store-name {
+  margin-right: 15px;
+  // font-size: 18px;
+  font-weight: bold;
 }
 .avatar-box {
   width: 40px;

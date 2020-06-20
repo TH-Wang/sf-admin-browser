@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="card-container">
-      <card-panel class="card-panel" title="今日订单量" :number="156">
+      <card-panel class="card-panel" title="今日订单量" :number="orderTotalNum">
         <template #suffix>
           <span class="card-suffix">号</span>
         </template>
@@ -9,7 +9,7 @@
       <card-panel
         class="card-panel"
         title="今日营业额"
-        :number="369.0"
+        :number="turnover"
         :fixedPlace="2"
       >
         <template #prefix>
@@ -30,12 +30,12 @@
     <div class="order-container">
       <div class="order-list">
         <div class="order-list-title">
-          <span class="order-header-button pending">待传菜</span>
+          <span class="order-header-button pending">进行中</span>
         </div>
         <transition-group name="list">
           <order-item
-            v-for="item in orderList"
-            :key="item.orderNumber"
+            v-for="item in doingOrderList"
+            :key="item.orderid"
             :info="item"
             mode="pending"
           ></order-item>
@@ -43,12 +43,12 @@
       </div>
       <div class="order-list">
         <div class="order-list-title">
-          <span class="order-header-button doing">进行中</span>
+          <span class="order-header-button doing">已完成</span>
         </div>
         <transition-group name="list">
           <order-item
-            v-for="item in list"
-            :key="item.orderNumber"
+            v-for="item in finishOrderList"
+            :key="item.orderid"
             :info="item"
             mode="doing"
           ></order-item>
@@ -62,6 +62,7 @@
 <script>
 import CardPanel from "@/components/CardPanel";
 import OrderItem from "@/components/OrderItem";
+import { dateDiff } from "@/utils/date.js";
 
 export default {
   components: {
@@ -101,17 +102,37 @@ export default {
         detail: [{ name: "酸菜肉丝盖饭", count: 1 }],
         ctime: "今天13:45"
       }
-    ],
-    customerCount: 0
+    ]
   }),
-  methods: {
-    // sendSocketInfo() {
-    //   this.$socket.emit("order", "cash", 10, "下订单");
-    // }
-  },
   computed: {
     orderList() {
       return this.$store.state.orderList;
+    },
+    customerCount() {
+      return this.$store.state.customers.length;
+    },
+    orderTotalNum() {
+      return this.$store.state.orderList.length;
+    },
+    turnover() {
+      return this.$store.state.orderList.reduce((prev, item) => {
+        return (
+          prev +
+          item.foodList.reduce((sum, el) => {
+            return sum + el.sum;
+          }, 0)
+        );
+      }, 0);
+    },
+    doingOrderList() {
+      return this.$store.state.orderList.filter(
+        item => item.state == 1 && dateDiff(item.ctime) < 0
+      );
+    },
+    finishOrderList() {
+      return this.$store.state.orderList
+        .filter(item => item.state == 0 && dateDiff(item.ctime) < 0)
+        .reverse();
     }
   },
   mounted() {
@@ -135,11 +156,6 @@ export default {
     // ws.onclose = function(e) {
     //   console.log(e);
     // };
-  },
-  watch: {
-    "$store.state.customers": function(val) {
-      this.customerCount = val.length;
-    }
   }
 };
 </script>
@@ -176,20 +192,14 @@ export default {
   border-radius: 36px;
   text-align: center;
 }
-.pending {
-  background-color: #ee5253;
-  color: white;
-}
-.doing {
-  background-color: #10ac84;
-  color: white;
-}
 
 .order-list {
   width: 45%;
+  max-height: 800px;
   padding: 20px 20px;
   transition: all 0.2s;
   border: solid 1.5px transparent;
+  overflow-y: scroll;
 }
 .order-list:hover {
   border: solid 1.5px #8395a7;
@@ -204,5 +214,8 @@ export default {
 .list-leave-to {
   opacity: 0;
   transform: scale(0.8) translateY(30px);
+}
+.list-move {
+  transition: all 0.5s;
 }
 </style>

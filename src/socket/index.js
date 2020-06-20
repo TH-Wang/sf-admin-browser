@@ -16,7 +16,7 @@ socket.install = function(Vue) {
   };
 
   ws.onmessage = function(res) {
-    console.log(res);
+    console.log("onmessage:\n" + res.data);
     listening(res.data, ws, events);
   };
 
@@ -44,13 +44,14 @@ function listening(data, ws, events) {
   let res = JSON.parse(data);
   for (let i = 0; i < events.length; i++) {
     const element = events[i];
-    if (element[0] == res.events) {
+    if (element[0] == res.event) {
       element[1].call(null, res.data, ws);
     }
   }
 }
 
 function scanSuccess(data, ws) {
+  console.log("scanSuccess:\n" + data);
   store.commit("pushCustomers", data.customer);
   ws.sendData({
     event: "storeResponse",
@@ -62,7 +63,8 @@ function scanSuccess(data, ws) {
 }
 
 function receiveOrder(data) {
-  store.commit("pushOrder", data.order);
+  console.log("receive" + data);
+  store.commit("pushOrder", data);
 }
 
 export default socket;

@@ -62,10 +62,12 @@
                 </router-link>
               </el-menu-item-group>
             </el-submenu>
-            <el-menu-item index="4">
-              <i class="el-icon-document-copy"></i>
-              <span slot="title">所有订单</span>
-            </el-menu-item>
+            <router-link :to="baseUrl + '/orderlist'">
+              <el-menu-item index="4">
+                <i class="el-icon-document-copy"></i>
+                <span slot="title">所有订单</span>
+              </el-menu-item>
+            </router-link>
             <el-menu-item index="5">
               <i class="el-icon-s-shop"></i>
               <span slot="title">店铺管理</span>
